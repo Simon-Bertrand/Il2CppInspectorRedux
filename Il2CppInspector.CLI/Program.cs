@@ -374,11 +374,17 @@ namespace Il2CppInspector.CLI
                 }
             }
 
-            // Determine which outputs to generate
+            // // Determine which outputs to generate
+            // var GenerateCS = !string.IsNullOrEmpty(options.CSharpOutPath);
+            // var GeneratePython = !string.IsNullOrEmpty(options.PythonOutFile);
+            // var GenerateCpp = !string.IsNullOrEmpty(options.CppOutPath) || GeneratePython;
+            // var GenerateJSON = !string.IsNullOrEmpty(options.JsonOutPath) || GeneratePython;
+            // var GenerateDLL = !string.IsNullOrEmpty(options.DllOutPath);
+
             var GenerateCS = !string.IsNullOrEmpty(options.CSharpOutPath);
             var GeneratePython = !string.IsNullOrEmpty(options.PythonOutFile);
-            var GenerateCpp = !string.IsNullOrEmpty(options.CppOutPath) || GeneratePython;
-            var GenerateJSON = !string.IsNullOrEmpty(options.JsonOutPath) || GeneratePython;
+            var GenerateCpp = !string.IsNullOrEmpty(options.CppOutPath);
+            var GenerateJSON = !string.IsNullOrEmpty(options.JsonOutPath);
             var GenerateDLL = !string.IsNullOrEmpty(options.DllOutPath);
 
             if (!options.SpecifiedOutputsOnly)
@@ -475,11 +481,19 @@ namespace Il2CppInspector.CLI
                 // Python script output
                 if (GeneratePython)
                     using (new Benchmark($"Generate {options.ScriptTarget} Python script")) {
-                        new PythonScript(appModel).WriteScriptToFile(
-                            getOutputPath(options.PythonOutFile, "py", imageIndex),
-                            options.ScriptTarget,
-                            Path.Combine(getOutputPath(options.CppOutPath, "", imageIndex), "appdata/il2cpp-types.h"),
-                            getOutputPath(options.JsonOutPath, "json", imageIndex));
+                            // Determine path to il2cpp-types.h if C++ output exists, otherwise skip
+                            var headerPath = GenerateCpp
+                                ? Path.Combine(getOutputPath(options.CppOutPath, "", imageIndex), "appdata/il2cpp-types.h")
+                                : null;
+                            // Determine path to JSON file if JSON output exists
+                            var jsonPath = GenerateJSON
+                                ? getOutputPath(options.JsonOutPath, "json", imageIndex)
+                                : null;
+                            new PythonScript(appModel).WriteScriptToFile(
+                                getOutputPath(options.PythonOutFile, "py", imageIndex),
+                                options.ScriptTarget,
+                                headerPath,
+                                jsonPath); 
                     }
 
                 // DLL output
